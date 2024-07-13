@@ -88,7 +88,7 @@ def kino_score(user_data, primary_file='fabricated_v1_data.csv', secondary_file=
     
     return kino_score_value
 
-# Example usage with a dictionary
+# Test case
 user_data_dict = {
     'bench_press': 200.0, 'incline_bench_press': 180.0, 'squat': 250.0, 'front_squat': 230.0,
     'deadlift': 300.0, 'romanian_deadlift': 290.0, 'power_clean': 150.0, 'hang_clean': 140.0,
