@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
-
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
 # Define the list of primary metrics and their secondary counterparts
 metrics = [
     'bench_press', 'squat', 'deadlift', 'power_clean', '40_yard', '10_yard', 
@@ -52,7 +53,7 @@ def kino_score(user_data, primary_file='fabricated_v1_data.csv', secondary_file=
     secondary_df = pd.read_csv(secondary_file).drop(columns=['user_id'])
     
     # all values in user_data are numeric or NaN
-    user_data = {k: (float(v) if v != 'n/a' else np.nan) for k, v in user_data.items()}
+    user_data = {k: (float(v) if v not in ('n/a', None) else np.nan) for k, v in user_data.items()}
     
     # Substitute missing primary metrics with secondary metrics in user data
     for primary, secondary in secondary_metrics.items():
@@ -68,6 +69,12 @@ def kino_score(user_data, primary_file='fabricated_v1_data.csv', secondary_file=
         if metric in primary_df.columns:
             min_value = primary_df[metric].min()
             max_value = primary_df[metric].max()
+            normalized_user_data[metric] = normalize_and_invert(
+                primary_user_data[metric], min_value, max_value, invert=metric in invert_metrics
+            )
+        elif metric in secondary_df.columns:  # Use secondary metrics for normalization if primary data is missing
+            min_value = secondary_df[metric].min()
+            max_value = secondary_df[metric].max()
             normalized_user_data[metric] = normalize_and_invert(
                 primary_user_data[metric], min_value, max_value, invert=metric in invert_metrics
             )
@@ -88,19 +95,40 @@ def kino_score(user_data, primary_file='fabricated_v1_data.csv', secondary_file=
     
     return kino_score_value
 
+def pca_analysis(primary_file='fabricated_v1_data.csv'):
+    # Load primary metrics data
+    primary_df = pd.read_csv(primary_file).drop(columns=['user_id'])
+    
+    # Perform PCA
+    pca = PCA()
+    pca.fit(primary_df.dropna(axis=0))
+    
+    # Explained variance ratio
+    explained_variance = pca.explained_variance_ratio_
+    
+    # Plot explained variance
+    plt.figure(figsize=(10, 6))
+    plt.bar(range(1, len(explained_variance) + 1), explained_variance, alpha=0.5, align='center')
+    plt.ylabel('Explained variance ratio')
+    plt.xlabel('Principal components')
+    plt.title('PCA Explained Variance')
+    plt.show()
+
+
+
+
 # Example usage with a dictionary
 user_data_dict = {
-    'bench_press': 200.0, 'incline_bench_press': 180.0, 'squat': 250.0, 'front_squat': 230.0,
-    'deadlift': 300.0, 'romanian_deadlift': 290.0, 'power_clean': 150.0, 'hang_clean': 140.0,
-    '40_yard': 4.5, '20_yard_shuttle': 4.2, '10_yard': 1.6, 'L_drill': 7.8,
-    'vertical_jump': 30.0, '100_meter': 12.0, 'broad_jump': 110.0, '60_meter': 8.0,
-    '1_mile': 7.5, 'marathon': 240.0, '5k_run': 20.0, 'half_marathon': 120.0,
-    'bench_press_power': 1000.0, 'incline_bench_press_power': 950.0, 'squat_power': 1500.0, 'front_squat_power': 1400.0,
-    'deadlift_power': 1600.0, 'romanian_deadlift_power': 1900.0, 'power_clean_power': 1200.0, 'hang_clean_power': 1300.0,
-    'body_fat_percentage': 15.0, 'waist_hip_ratio': 0.9, 'skeletal_muscle_mass': 40.0, 'muscle_mass': 50.0,
-    'quad_asymmetry': 5.0, 'quad_symmetry': 95.0, 'calf_asymmetry': 1.30, 'calf_symmetry': 3
+    "bench_press": None , "incline_bench_press": 180.0, "squat": 250.0, "front_squat": 230.0,
+    "deadlift": 300.0, "romanian_deadlift": 290.0, "power_clean": 150.0, "hang_clean": 140.0,
+    "40_yard": 4.5, "20_yard_shuttle": 4.2, "10_yard": 1.6, "L_drill": 7.8,
+    "vertical_jump": 30.0, "100_meter": 12.0, "broad_jump": 110.0, "60_meter": 8.0,
+    "1_mile": 7.5, "marathon": 240.0, "5k_run": 20.0, "half_marathon": 120.0,
+    "bench_press_power": 1000.0, "incline_bench_press_power": 950.0, "squat_power": 1500.0, "front_squat_power": 1400.0,
+    "deadlift_power": 1600.0, "romanian_deadlift_power": 1900.0, "power_clean_power": 1200.0, "hang_clean_power": 1300.0,
+    "body_fat_percentage": 15.0, "waist_hip_ratio": 0.9, "skeletal_muscle_mass": 40.0, "muscle_mass": 50.0,
+    "quad_asymmetry": 5.0, "quad_symmetry": 95.0, "calf_asymmetry": 1.30, "calf_symmetry": 3
 }
-
 
 score = kino_score(user_data_dict)
 print(f"KinoScore: {score}")
