@@ -5,7 +5,7 @@ from sklearn.decomposition import PCA
 import csv
 import os
 
-# Define the list of primary metrics and their secondary counterparts
+# List of primary metrics and their secondary counterparts
 metrics = [
     'bench_press', 'squat', 'deadlift', 'power_clean', '40_yard', '10_yard', 
     'vertical_jump', 'broad_jump', '1_mile', '5k_run', 'bench_press_power', 'squat_power', 
@@ -38,7 +38,7 @@ secondary_metrics = {
     'calf_asymmetry': 'calf_symmetry'
 }
 
-# Define which metrics should be inverted (lower is better)
+# List of which metrics should be inverted (where lower values are better)
 invert_metrics = [
     '40_yard', '20_yard_shuttle', '10_yard', 'L_drill', 
     '100_meter', '60_meter', '1_mile', '5k_run', 
@@ -169,26 +169,21 @@ def normalize_and_invert(value, min_value, max_value, invert=False, trend=None, 
     if pd.isna(value) or pd.isna(min_value) or pd.isna(max_value):
         return np.nan
 
-    # Normalize the value
     normalized_value = (value - min_value) / (max_value - min_value)
     
-    # Invert normalization if needed
     if invert:
         normalized_value = 1 - normalized_value
     
-    # Combine with trend if provided
     if trend:
         trend_weight = weight_distribution['trend'] if weight_distribution else 0.5
         objective_weight = weight_distribution['objective'] if weight_distribution else 0.5
         trend_normalized = trend.get('current', 0) / trend.get('historical', 1)
         normalized_value = (objective_weight * normalized_value) + (trend_weight * trend_normalized)
     
-    # Apply improvement penalty if needed
     if improvement_penalty and trend:
         if value == trend['historical']:
-            normalized_value *= 0.9  # Apply a 10% penalty for lack of improvement
+            normalized_value *= 0.9  # Penalty if didnt improve
     
-    # Ensure the combined normalized value is within the range of 0 to 1
     normalized_value = np.clip(normalized_value, 0, 1)
     
     return normalized_value
@@ -236,7 +231,7 @@ metrics_weight_distribution = {
     'hydration': {'objective': 0.5, 'trend': 0.5}
 }
 
-# Define the function to append the user data dictionary to a CSV file
+#append the user data dictionary to CSV
 def append_dict_to_csv(dictionary, filename):
     file_exists = os.path.isfile(filename)
     
@@ -262,7 +257,7 @@ def remove_duplicates_from_csv(filename):
         df.to_csv(filename, index=False)
 
 def calculate_consistency_score(user_data, historical_df):
-    # Define weights for historical days
+    
     weekly_weights = {
         1: 0.70,
         2: 0.20,
@@ -462,7 +457,7 @@ def calculate_reps_score(current, trend):
 
 
 def calculate_heart_score(user_data, historical_df):
-    # Define weights for historical days
+    
     historical_weights = {
         1: 0.35,
         2: 0.25,
@@ -500,7 +495,7 @@ def calculate_heart_score(user_data, historical_df):
     return heart_score
 
 def calculate_recovery_score(user_data, historical_df):
-    # Define weights for historical days for sleep
+    
     sleep_weights = {
         1: 0.40,
         2: 0.30,
@@ -615,7 +610,7 @@ def kino_score_v2(user_data, selected_goals, metrics, primary_file='fabricated_v
     weighted_kino_score = weighted_sum / sum(final_weights.values())
     weighted_kino_score = round(weighted_kino_score, 2)
     
-    # Ensure KinoScore is within 1-100 range
+    
     weighted_kino_score = max(1, min(weighted_kino_score, 100))
 
     return weighted_kino_score
@@ -693,13 +688,12 @@ selected_goals = ['Lose excess body fat', 'Build muscle mass', 'Get faster', 'Im
 weighted_score = kino_score_v2(user_data_dict, selected_goals, metrics)
 print(f"Weighted KinoScore after initial input: {weighted_score}")
 
-# Plot KinoScores for each user input in the historical data
+
 plot_kinoscores()
 
-# Visualize user performance metrics
 visualize_metrics(user_data_dict)
 
-# Periodically clean duplicates
+
 remove_duplicates_from_csv('historical_data.csv')
 
 
